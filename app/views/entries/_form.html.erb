@@ -1,0 +1,26 @@
+<% object = @entry  %>
+<% if object.errors.any? %>
+  <div class="alert alert-error">
+    <a class="close" data-dismiss="alert">×</a>
+    The form contains <%= pluralize(object.errors.count, "error") %>.
+    <ul>
+      <% object.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+<%= simple_form_for @entry, :url => @path, :html => { :class => 'form-horizontal' } do |f| %>
+  <%= f.input :date, as: :datepicker %>
+  <%= f.input :entry_type, collection: Entry::TYPES, value_method: :first, label_method: :last  %>
+  <%= f.input :responsible, collection: User.all, value_method: :name %>
+  <%= f.input :subject %>
+  <%# binding.pry %>
+  <%= f.input :attachment %>
+  <%= "esborrar anterior" unless @entry.attachment_file_name.nil? %>
+  <div class="form-actions">
+    <%= f.button :submit, :class => 'btn btn-primary' %>
+    <%= link_to t('.cancel', :default => t("helpers.links.cancel")),
+                project_diary_entries_path, :class => 'btn' %>
+  </div>
+<% end %>

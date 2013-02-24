@@ -1,0 +1,32 @@
+<%= simple_form_for @project, :html => { :class => 'form-horizontal' }, :defaults => { :input_html => { :class => 'span4'  }  } do |f| %>
+  <%= f.input :code %>
+  <%= f.input :name %>
+  <%= f.input :description, input_html: { rows: 3 } %>
+  <%= f.input :status, collection: Project::STATUS %>
+  <%= f.input :commission, collection: Project::COMMISSION %>
+  <%= f.input :address %>
+  <%= f.input :city %>
+  <%= f.input :state %>
+  <%= f.input :country, as: :string %>
+  <%= f.input :start_year, as: :string %>
+  <%= f.input :end_year, as: :string %>
+  <%= f.input :gfa, label: 'Gross Floor Area' %>
+  <%= f.input :exterior_area %>
+  <%= f.input :budget %>
+
+  <%= hidden_field_tag :colab_name, nil, data: { autocomplete_source: Participant.order(:name).map(&:name) } %>
+
+  <%= f.simple_fields_for :collaborations do |cf| %>
+    <%= render 'collaboration_fields', f: cf %>
+  <% end %>
+
+  <%= f.association :categories, as: :check_boxes %>
+
+  <%= link_to_add_fields "Add Participant", f, :collaborations %>
+
+  <div class='form-actions'>
+    <%= f.button :submit, :class => 'btn btn-primary' %>
+    <%= link_to t('.cancel', :default => t('helpers.links.cancel')),
+                projects_path, :class => 'btn' %>
+  </div>
+<% end %>
