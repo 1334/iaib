@@ -1,84 +1,84 @@
 #!/bin/sh
-### begin init info
-# provides:          unicorn
-# required-start:    $remote_fs $syslog
-# required-stop:     $remote_fs $syslog
-# default-start:     2 3 4 5
-# default-stop:      0 1 6
-# short-description: manage unicorn server
-# description:       start, stop, restart unicorn server for a specific application.
-### end init info
+### BEGIN INIT INFO
+# Provides:          unicorn
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Manage unicorn server
+# Description:       Start, stop, restart unicorn server for a specific application.
+### END INIT INFO
 set -e
 
-# feel free to change any of the following variables for your app:
-timeout=${timeout-60}
-app_root=<%= current_path %>
-pid=<%= unicorn_pid %>
-cmd="cd <%= current_path %>; bundle exec unicorn -d -c <%= unicorn_config %> -e production"
-as_user=<%= unicorn_user %>
+# Feel free to change any of the following variables for your app:
+TIMEOUT=${TIMEOUT-60}
+APP_ROOT=<%= current_path %>
+PID=<%= unicorn_pid %>
+CMD="cd <%= current_path %>; bundle exec unicorn -D -c <%= unicorn_config %> -E production"
+AS_USER=<%= unicorn_user %>
 set -u
 
-old_pin="$pid.oldbin"
+OLD_PIN="$PID.oldbin"
 
 sig () {
-  test -s "$pid" && kill -$1 `cat $pid`
+  test -s "$PID" && kill -$1 `cat $PID`
 }
 
 oldsig () {
-  test -s $old_pin && kill -$1 `cat $old_pin`
+  test -s $OLD_PIN && kill -$1 `cat $OLD_PIN`
 }
 
 run () {
-  if [ "$(id -un)" = "$as_user" ]; then
+  if [ "$(id -un)" = "$AS_USER" ]; then
     eval $1
   else
-    su -c "$1" - $as_user
+    su -c "$1" - $AS_USER
   fi
 }
 
 case "$1" in
-  start)
-sig 0 && echo >&2 "already running" && exit 0
-run "$cmd"
-;;
+start)
+  sig 0 && echo >&2 "Already running" && exit 0
+  run "$CMD"
+  ;;
 stop)
-sig quit && exit 0
-echo >&2 "not running"
-;;
+  sig QUIT && exit 0
+  echo >&2 "Not running"
+  ;;
 force-stop)
-sig term && exit 0
-echo >&2 "not running"
-;;
+  sig TERM && exit 0
+  echo >&2 "Not running"
+  ;;
 restart|reload)
-sig hup && echo reloaded ok && exit 0
-echo >&2 "couldn't reload, starting '$cmd' instead"
-run "$cmd"
-;;
+  sig HUP && echo reloaded OK && exit 0
+  echo >&2 "Couldn't reload, starting '$CMD' instead"
+  run "$CMD"
+  ;;
 upgrade)
-if sig usr2 && sleep 2 && sig 0 && oldsig quit
+  if sig USR2 && sleep 2 && sig 0 && oldsig QUIT
   then
-  n=$timeout
-  while test -s $old_pin && test $n -ge 0
-  do
-    printf '.' && sleep 1 && n=$(( $n - 1 ))
-  done
-  echo
+    n=$TIMEOUT
+    while test -s $OLD_PIN && test $n -ge 0
+    do
+      printf '.' && sleep 1 && n=$(( $n - 1 ))
+    done
+    echo
 
-  if test $n -lt 0 && test -s $old_pin
+    if test $n -lt 0 && test -s $OLD_PIN
     then
-    echo >&2 "$old_pin still exists after $timeout seconds"
-    exit 1
+      echo >&2 "$OLD_PIN still exists after $TIMEOUT seconds"
+      exit 1
+    fi
+    exit 0
   fi
-  exit 0
-fi
-echo >&2 "couldn't upgrade, starting '$cmd' instead"
-run "$cmd"
-;;
+  echo >&2 "Couldn't upgrade, starting '$CMD' instead"
+  run "$CMD"
+  ;;
 reopen-logs)
-sig usr1
-;;
+  sig USR1
+  ;;
 *)
-echo >&2 "usage: $0 <start|stop|restart|upgrade|force-stop|reopen-logs>"
-exit 1
-;;
+  echo >&2 "Usage: $0 <start|stop|restart|upgrade|force-stop|reopen-logs>"
+  exit 1
+  ;;
 esac
